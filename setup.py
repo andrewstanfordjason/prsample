@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="prsample-andrewstanfordjason", 
-    version="0.0.1",
+    name="prsample", 
+    version="0.0.2",
     author="Andrew Stanford-Jason",
     author_email="andrewstanfordjason@gmail.com",
     description="A pseudo-random data sampler",
