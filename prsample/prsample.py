@@ -2,11 +2,29 @@ import numpy as  np
 from math import gcd
 import bisect
 
-def build_class_list_from_class_dirs(dir_list):
+def build_class_list_from_class_dirs(dir_list, file_types):
+    """
+        Builds a list of classes where each class is given by a directory of files. 
+    """
+    import glob
+    import os
 
+    file_list = []
+    for path in dir_list:
+            path = os.path.expanduser(path)
+            path = os.path.expandvars(path)
+            path = os.path.normpath(path)
 
+            for file_type in file_types:
+                file_list += glob.glob(os.path.join(path, '**', '*.' + str(file_type)))
 
-    return None
+    class_path_list = {os.path.dirname(path) for path in file_list}
+
+    class_list = []
+    for class_path in class_path_list:
+        class_list.append([path for path in file_list if os.path.dirname(path) == class_path])
+
+    return class_list
 
 def get_class_idx_from_index(index, cumsum_examples_per_class):
     """
@@ -136,13 +154,20 @@ class prsample:
         else:
             return np.ones(examples_per_batch, dtype = int)
 
-        assert examples_per_batch > 1, 'not enought examples per batch'
+        assert examples_per_batch_index > 1, 'too many examples per batch'
+        # assert examples_per_batch_index > 2, 'still not enough examples per batch'
+
+        #There must be enough coprimes numbers, i.e. examples_per_batch < copime_count(existing_strides)
+
+
+        existing_strides = []
         for batch_index in range(examples_per_batch):
             stride = np.random.randint(2, examples_per_batch_index)
-            while not self._is_coprime(stride, examples_per_batch_index):
-                stride = (stride + 1)%examples_per_batch_index
-                if stride == 0:
-                    stride = 2
+
+            while not self._is_coprime(stride, examples_per_batch_index) or not stride in existing_strides:
+                stride = np.random.randint(2, examples_per_batch_index)
+
+            existing_strides.append(stride)
             batch_strides[batch_index] = stride
         return batch_strides
 

@@ -52,6 +52,37 @@ def test_run_self_checks_pairs(examples_per_batch):
     p.run_self_checks()
     return
 
+
+@pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 48)])
+def test_tiny_set(examples_per_batch):
+
+    total_batch_size = 48
+    object_list = []
+
+    # This lambda fn guarentees that all classes have a different number of objects
+    # Meaning after the shuffle one of the two prsample objects will fail if
+    # it has not correctly copied the object list
+    object_list = build_class_list(1, lambda x : 16)
+
+    p_batch_size = examples_per_batch
+    q_batch_size = total_batch_size - examples_per_batch
+
+    #FIXME zero sized batches should be allowed
+
+    p = prs.prsample(object_list, p_batch_size, prse.Single_Example.examples_per_obj, prse.Single_Example.get_example_from_obj, seed = 2)
+    q = prs.prsample(object_list, q_batch_size, prse.Single_Example.examples_per_obj, prse.Single_Example.get_example_from_obj, seed = 1)
+
+    for index in range(max(p.__len__(), q.__len__())):
+        for batch_index in range(p_batch_size):
+            ex = p.get_example(index, batch_index)
+            class_id, class_no = ex.get()
+            ex.is_valid(object_list)
+        for batch_index in range(q_batch_size):
+            ex = q.get_example(index, batch_index)
+            ex.is_valid(object_list)
+
+    return
+
 @pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 48)])
 def test_shared_object_singles(examples_per_batch):
 
@@ -95,8 +126,6 @@ def test_shared_object_pairs(examples_per_batch):
 
     p_batch_size = examples_per_batch
     q_batch_size = total_batch_size - examples_per_batch
-
-    #FIXME zero sized batches should be allowed
 
     p = prs.prsample(object_list, p_batch_size, prse.Pair_Example.examples_per_obj, prse.Pair_Example.get_example_from_obj, seed = 2)
     q = prs.prsample(object_list, q_batch_size, prse.Pair_Example.examples_per_obj, prse.Pair_Example.get_example_from_obj, seed = 1)
