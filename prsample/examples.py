@@ -15,6 +15,9 @@ class Single_Example():
     def __hash__(self): 
         return super.__hash__((self.class_idx, self.obj_idx))
 
+    def __eq__(self, other): 
+        return self.class_idx == other.class_idx and  self.obj_idx == other.obj_idx
+
     def get(self):
         return (self.class_idx, self.obj_idx)
 
@@ -34,7 +37,7 @@ class Single_Example():
     def get_example_from_obj(index, class_list, cumsum_examples_per_class):
         class_idx = prs.get_class_idx_from_index(index, cumsum_examples_per_class)
         obj_idx, offset = prs.get_obj_idx_from_index(index, class_list[class_idx])
-        return Single_Example(class_list[class_idx]['class_no'], offset)
+        return Single_Example(class_list[class_idx]['class_no'], obj_idx)
 
 
 class Pair_Example():
@@ -50,6 +53,10 @@ class Pair_Example():
 
     def __hash__(self): 
         return super.__hash__((self.class_a, self.a, self.class_b, self.b))
+
+    def __eq__(self, other): 
+        return self.class_a == other.class_a and  self.a == other.a and \
+            self.class_b == other.class_b and  self.b == other.b
 
     def get(self):
         return (self.class_a, self.a, self.class_b, self.b)
@@ -80,10 +87,7 @@ class Pair_Example():
         class_idx = prs.get_class_idx_from_index(index, cumsum_examples_per_class)
         obj_idx, offset = prs.get_obj_idx_from_index(index, class_list[class_idx])
 
-        examples_in_class = len(class_list[class_idx]['object_list'])
-        a = offset // examples_in_class
-        b = offset % examples_in_class
-        return Pair_Example(class_list[class_idx]['class_no'], a, class_list[class_idx]['class_no'], b)
+        return Pair_Example(class_list[class_idx]['class_no'], obj_idx, class_list[class_idx]['class_no'], offset)
 
 
 

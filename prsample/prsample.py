@@ -66,7 +66,10 @@ def get_obj_idx_from_index(index, class_dict):
 
 class prsample:
 
-    def __init__(self, class_list, examples_per_batch, examples_per_obj, get_example_from_obj, shuffle = True, seed = 69):
+    def __init__(self, class_list, examples_per_batch, examples_per_obj, get_example_from_obj, 
+                no_duplicated_data = True, 
+                shuffle = True, 
+                seed = 69):
         """
             Creates a prsample object. The data that the sampling will be over is a list of classes. Each class should be described 
             by a list of all objects within that class.
@@ -110,6 +113,10 @@ class prsample:
             self.init_prsample()
         else:
             self.examples_per_batch_index = 0
+            self.total_example_count = 0
+
+        assert isinstance(no_duplicated_data, bool) , 'no_duplicated_data must be an bool type.'
+        self.no_duplicated_data = no_duplicated_data
 
         return
 
@@ -136,10 +143,18 @@ class prsample:
         """
         if self.examples_per_batch == 0:
             return None
+        if self.no_duplicated_data:
+            if batch_no < self.exact_examples_per_batch_index[batch_index]:
+                idx = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
+                    self.examples_per_batch_index, self.total_example_count)
+                return self.get_example_from_object(idx, self._class_list, self._cumsum_examples_per_class)
+            else:
+                return None
+        else:
 
-        idx = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
-            self.examples_per_batch_index, self.total_example_count)
-        return self.get_example_from_object(idx, self._class_list, self._cumsum_examples_per_class)
+            idx = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
+                self.examples_per_batch_index, self.total_example_count)
+            return self.get_example_from_object(idx, self._class_list, self._cumsum_examples_per_class)
 
     def _batch_to_idx(self, index, batch_index, examples_per_batch, batch_strides, examples_per_batch_index, total_example_count):
         idx = (batch_index + examples_per_batch*(((index+batch_index) * batch_strides[batch_index])%examples_per_batch_index) )%total_example_count
@@ -150,16 +165,14 @@ class prsample:
 
     def _find_batch_strides(self, examples_per_batch, total_example_count, examples_per_batch_index):
         if examples_per_batch_index == 1:
-            batch_strides = np.empty(examples_per_batch, dtype = int)
+            batch_strides = np.ones(examples_per_batch, dtype = int)
+            return batch_strides
         else:
             return np.ones(examples_per_batch, dtype = int)
 
         assert examples_per_batch_index > 1, 'too many examples per batch'
-        # assert examples_per_batch_index > 2, 'still not enough examples per batch'
 
         #There must be enough coprimes numbers, i.e. examples_per_batch < copime_count(existing_strides)
-
-
         existing_strides = []
         for batch_index in range(examples_per_batch):
             stride = np.random.randint(2, examples_per_batch_index)
@@ -202,7 +215,21 @@ class prsample:
 
         self.number_of_batches = int(np.ceil(self.total_example_count / self.examples_per_batch))
 
+        print('total_example_count', self.total_example_count, 'examples_per_batch', self.examples_per_batch)
         self.examples_per_batch_index = int(np.ceil(self.total_example_count/self.examples_per_batch))
+
+        #Work out the exact number of batches each batch index could produce before wrapping around
+        if self.examples_per_batch > self.total_example_count:
+            self.exact_examples_per_batch_index = np.zeros(self.examples_per_batch, dtype= int)
+            self.exact_examples_per_batch_index[:self.total_example_count] = 1
+            self.exact_examples_per_batch_index[self.total_example_count:] = 0
+        else:
+            r = self.examples_per_batch - ((self.examples_per_batch_index*self.examples_per_batch)%self.total_example_count)
+            self.exact_examples_per_batch_index = np.zeros(self.examples_per_batch, dtype= int)
+            self.exact_examples_per_batch_index[:r] = self.examples_per_batch_index
+            self.exact_examples_per_batch_index[r:] = (self.examples_per_batch_index - 1)
+
+        assert sum(self.exact_examples_per_batch_index) == self.total_example_count
 
         # Find the strides for the 
         self.batch_strides = self._find_batch_strides(self.examples_per_batch, self.total_example_count, self.examples_per_batch_index)
@@ -221,12 +248,14 @@ class prsample:
         seen_examples = set()
         for idx in range(total_example_count):
             ex = get_example_from_object(idx, class_list, cumsum_examples_per_class)
-            
-            assert(ex not in seen_examples)
-            seen_examples.add(ex)
 
-            if ex.is_valid != None:
-                assert(ex.is_valid(unshuffled_class_list))
+            if ex is not None:
+                # print(ex.class_idx, ex.obj_idx)
+                assert(ex not in seen_examples)
+                seen_examples.add(ex)
+                if ex.is_valid != None:
+                    assert(ex.is_valid(unshuffled_class_list))
+        assert len(seen_examples) == total_example_count
 
     def _test_batch_to_index_mapping(self, examples_per_batch, examples_per_batch_index, batch_strides, total_example_count):
         seen_indicies = set()
