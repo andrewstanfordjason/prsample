@@ -89,5 +89,8 @@ class Pair_Example():
 
         return Pair_Example(class_list[class_idx]['class_no'], obj_idx, class_list[class_idx]['class_no'], offset)
 
+    #TODO the all non-class-pairs
+
+    #TODO the within class pairs with a,b == b,a
 
 

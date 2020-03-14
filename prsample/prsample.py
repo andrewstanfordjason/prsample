@@ -144,21 +144,26 @@ class prsample:
         if self.examples_per_batch == 0:
             return None
         if self.no_duplicated_data:
-            if batch_no < self.exact_examples_per_batch_index[batch_index]:
-                idx = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
-                    self.examples_per_batch_index, self.total_example_count)
+            idx, is_valid = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
+                self.examples_per_batch_index, self.total_example_count)
+            if is_valid:
                 return self.get_example_from_object(idx, self._class_list, self._cumsum_examples_per_class)
             else:
                 return None
         else:
 
-            idx = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
+            idx, _ = self._batch_to_idx(batch_no, batch_index, self.examples_per_batch, self.batch_strides, \
                 self.examples_per_batch_index, self.total_example_count)
             return self.get_example_from_object(idx, self._class_list, self._cumsum_examples_per_class)
 
-    def _batch_to_idx(self, index, batch_index, examples_per_batch, batch_strides, examples_per_batch_index, total_example_count):
-        idx = (batch_index + examples_per_batch*(((index+batch_index) * batch_strides[batch_index])%examples_per_batch_index) )%total_example_count
-        return idx
+    def _batch_to_idx(self, index, batch_index, examples_per_batch, batch_strides, \
+            examples_per_batch_index, total_example_count):
+        
+        stride_point = (index+batch_index) * batch_strides[batch_index]
+        unwraped_idx = batch_index + examples_per_batch*(stride_point%examples_per_batch_index)
+
+        idx = unwraped_idx%total_example_count
+        return idx, unwraped_idx < total_example_count
 
     def _is_coprime(self, a, b):
         return gcd(a, b) == 1
@@ -238,8 +243,10 @@ class prsample:
 
     def run_self_checks(self):
         if self.examples_per_batch > 0:
-            self._test_example_mapping(self.total_example_count, self._class_list, self.unshuffled_class_list, self.get_example_from_object, self._cumsum_examples_per_class)
-            self._test_batch_to_index_mapping(self.examples_per_batch, self.examples_per_batch_index, self.batch_strides, self.total_example_count)
+            self._test_example_mapping(self.total_example_count, self._class_list, \
+                    self.unshuffled_class_list, self.get_example_from_object, self._cumsum_examples_per_class)
+            self._test_batch_to_index_mapping(self.examples_per_batch, self.examples_per_batch_index, \
+                    self.batch_strides, self.total_example_count)
         return
 
     # This test that given all expected indicies all outputs are unique
@@ -257,11 +264,14 @@ class prsample:
                     assert(ex.is_valid(unshuffled_class_list))
         assert len(seen_examples) == total_example_count
 
-    def _test_batch_to_index_mapping(self, examples_per_batch, examples_per_batch_index, batch_strides, total_example_count):
+    def _test_batch_to_index_mapping(self, examples_per_batch, examples_per_batch_index, batch_strides, \
+            total_example_count):
         seen_indicies = set()
         for index in range(examples_per_batch_index):
             for batch_index in range(examples_per_batch):
-                idx = self._batch_to_idx(index, batch_index, examples_per_batch, batch_strides, examples_per_batch_index, total_example_count)
-                seen_indicies.add(idx)
+                idx, is_valid = self._batch_to_idx(index, batch_index, examples_per_batch, batch_strides, \
+                    examples_per_batch_index, total_example_count)
+                if is_valid:
+                    seen_indicies.add(idx)
 
         assert(len(seen_indicies) == total_example_count)

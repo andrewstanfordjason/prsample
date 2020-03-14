@@ -43,7 +43,7 @@ def test_get_obj_no_from_index(no_duplicated_data):
 @pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 48)])
-def test_run_self_checks_singles(examples_per_batch, no_duplicated_data, example_class):
+def test_run_self_checks(examples_per_batch, no_duplicated_data, example_class):
     object_list = build_class_list(16, lambda x : np.random.randint(3, 12))
     p = prs.prsample(object_list, examples_per_batch, example_class.examples_per_obj, \
         example_class.get_example_from_obj, no_duplicated_data = no_duplicated_data)
@@ -52,7 +52,7 @@ def test_run_self_checks_singles(examples_per_batch, no_duplicated_data, example
 
 @pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
-@pytest.mark.parametrize("examples_per_batch", [i for i in range(0, 24)])
+@pytest.mark.parametrize("examples_per_batch", [i for i in range(0, 18)])
 def test_tiny_set(examples_per_batch, no_duplicated_data, example_class):
 
     total_batch_size = 24
@@ -91,10 +91,10 @@ def test_tiny_set(examples_per_batch, no_duplicated_data, example_class):
     assert len(q_set) == q.total_example_count
     return
 
-@pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
+@pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example]) #
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch", [i for i in range(0, 24)])
-def tes1t_singles(examples_per_batch, no_duplicated_data, example_class):
+def test_singles(examples_per_batch, no_duplicated_data, example_class):
 
     total_batch_size = 24
     object_list = []
@@ -113,6 +113,7 @@ def tes1t_singles(examples_per_batch, no_duplicated_data, example_class):
 
     p_set = set()
     empty_p_example_count = 0
+
     for index in range(p.__len__()):
         for batch_index in range(p_batch_size):
             ex = p.get_example(index, batch_index)
@@ -121,14 +122,26 @@ def tes1t_singles(examples_per_batch, no_duplicated_data, example_class):
                 p_set.add(ex)
             else:
                 empty_p_example_count += 1
+
+    total_example_requested = p.__len__()*p_batch_size
+
+    # print(p.exact_examples_per_batch_index)
+
+
+
+    print(total_example_requested, p.total_example_count, len(p_set))
+    if no_duplicated_data:
+        pass
+    else:
+        assert empty_p_example_count == 0
+
     assert len(p_set) == p.total_example_count
-    assert empty_q_example_count == 0
     return
 
 @pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 24)])
-def te1st_shared_object_singles(examples_per_batch, no_duplicated_data, example_class):
+def test_shared_object_singles(examples_per_batch, no_duplicated_data, example_class):
 
     total_batch_size = 24
     object_list = []
@@ -173,7 +186,7 @@ def te1st_shared_object_singles(examples_per_batch, no_duplicated_data, example_
     assert empty_p_example_count == 0
     return
 
-def te1st_version_number():
+def test_version_number():
     assert prs.__version__ == '0.0.3'
     return
 
