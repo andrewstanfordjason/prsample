@@ -30,8 +30,7 @@ def test_get_obj_no_from_index(no_duplicated_data):
 
     seen_examples = set()
     for index in range(total_examples):
-        # class_index, obj_index, offset = prs.get_obj_no_from_index(index, p.example_lut)
-
+        
         class_idx = prs.get_class_idx_from_index(index, p._cumsum_examples_per_class)
         obj_idx, offset = prs.get_obj_idx_from_index(index, p._class_list[class_idx])
 
@@ -65,8 +64,6 @@ def test_tiny_set(examples_per_batch, no_duplicated_data, example_class):
 
     p_batch_size = examples_per_batch
     q_batch_size = total_batch_size - examples_per_batch
-
-    #FIXME zero sized batches should be allowed
 
     p = prs.prsample(object_list, p_batch_size, example_class.examples_per_obj, \
         example_class.get_example_from_obj, seed = 2, no_duplicated_data = no_duplicated_data)
@@ -106,8 +103,6 @@ def test_singles(examples_per_batch, no_duplicated_data, example_class):
 
     p_batch_size = examples_per_batch
 
-    #FIXME zero sized batches should be allowed
-
     p = prs.prsample(object_list, p_batch_size, example_class.examples_per_obj, \
         example_class.get_example_from_obj, seed = 2, no_duplicated_data = no_duplicated_data)
 
@@ -125,14 +120,7 @@ def test_singles(examples_per_batch, no_duplicated_data, example_class):
 
     total_example_requested = p.__len__()*p_batch_size
 
-    # print(p.exact_examples_per_batch_index)
-
-
-
-    print(total_example_requested, p.total_example_count, len(p_set))
-    if no_duplicated_data:
-        pass
-    else:
+    if not no_duplicated_data:
         assert empty_p_example_count == 0
 
     assert len(p_set) == p.total_example_count
@@ -180,10 +168,13 @@ def test_shared_object_singles(examples_per_batch, no_duplicated_data, example_c
                 q_set.add(ex)
             else:
                 empty_q_example_count += 1
+
     assert len(p_set) == p.total_example_count
     assert len(q_set) == q.total_example_count
-    assert empty_q_example_count == 0
-    assert empty_p_example_count == 0
+
+    if not no_duplicated_data:
+        assert empty_q_example_count == 0
+        assert empty_p_example_count == 0
     return
 
 def test_version_number():
