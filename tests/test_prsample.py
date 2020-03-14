@@ -3,6 +3,10 @@ import numpy as np
 import prsample as prs
 import prsample.examples as prse
 
+example_list = [prse.Single_Example, prse.Ordered_In_Class_Pair_Example, \
+    prse.Unordered_In_Class_Pair_Example, prse.Unordered_Out_of_Class_Pair_Example]
+
+
 def build_class_list(class_count, objects_per_class):
     class_list = []
     object_id = 0
@@ -14,23 +18,24 @@ def build_class_list(class_count, objects_per_class):
 
     return class_list
 
+@pytest.mark.parametrize("example_class", example_list)
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
-def test_get_obj_no_from_index(no_duplicated_data):
+@pytest.mark.parametrize("examples_per_batch",[i for i in range(1, 8)])
+def test_get_obj_no_from_index(examples_per_batch, no_duplicated_data, example_class):
 
-    class_count = 4
-    examples_per_class = 8
+    class_count = 2
+    examples_per_class = 5
     #16 classes each with 8 examples
     class_list = build_class_list(class_count, lambda x : examples_per_class)
 
-    examples_per_batch = 5
-    p = prs.prsample(class_list, examples_per_batch, prse.Single_Example.examples_per_obj, \
-        prse.Single_Example.get_example_from_obj, no_duplicated_data = no_duplicated_data)
+    p = prs.prsample(class_list, examples_per_batch, example_class.examples_per_obj, \
+        example_class.get_example_from_obj, no_duplicated_data = no_duplicated_data)
     
     total_examples = class_count * examples_per_class
 
     seen_examples = set()
     for index in range(total_examples):
-        
+
         class_idx = prs.get_class_idx_from_index(index, p._cumsum_examples_per_class)
         obj_idx, offset = prs.get_obj_idx_from_index(index, p._class_list[class_idx])
 
@@ -39,17 +44,17 @@ def test_get_obj_no_from_index(no_duplicated_data):
     assert len(seen_examples) == total_examples, 'some examples seen twice'
     return
 
-@pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
+@pytest.mark.parametrize("example_class", example_list)
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 48)])
 def test_run_self_checks(examples_per_batch, no_duplicated_data, example_class):
-    object_list = build_class_list(16, lambda x : np.random.randint(3, 12))
+    object_list = build_class_list(5, lambda x : np.random.randint(3, 12))
     p = prs.prsample(object_list, examples_per_batch, example_class.examples_per_obj, \
         example_class.get_example_from_obj, no_duplicated_data = no_duplicated_data)
     p.run_self_checks()
     return
 
-@pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
+@pytest.mark.parametrize("example_class", example_list)
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch", [i for i in range(0, 18)])
 def test_tiny_set(examples_per_batch, no_duplicated_data, example_class):
@@ -88,7 +93,7 @@ def test_tiny_set(examples_per_batch, no_duplicated_data, example_class):
     assert len(q_set) == q.total_example_count
     return
 
-@pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example]) #
+@pytest.mark.parametrize("example_class", example_list)
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch", [i for i in range(0, 24)])
 def test_singles(examples_per_batch, no_duplicated_data, example_class):
@@ -99,7 +104,7 @@ def test_singles(examples_per_batch, no_duplicated_data, example_class):
     # This lambda fn guarentees that all classes have a different number of objects
     # Meaning after the shuffle one of the two prsample objects will fail if
     # it has not correctly copied the object list
-    object_list = build_class_list(16, lambda x : x)
+    object_list = build_class_list(5, lambda x : x)
 
     p_batch_size = examples_per_batch
 
@@ -126,7 +131,7 @@ def test_singles(examples_per_batch, no_duplicated_data, example_class):
     assert len(p_set) == p.total_example_count
     return
 
-@pytest.mark.parametrize("example_class",[prse.Single_Example, prse.Pair_Example])
+@pytest.mark.parametrize("example_class", example_list)
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 24)])
 def test_shared_object_singles(examples_per_batch, no_duplicated_data, example_class):
@@ -137,12 +142,10 @@ def test_shared_object_singles(examples_per_batch, no_duplicated_data, example_c
     # This lambda fn guarentees that all classes have a different number of objects
     # Meaning after the shuffle one of the two prsample objects will fail if
     # it has not correctly copied the object list
-    object_list = build_class_list(16, lambda x : x)
+    object_list = build_class_list(5, lambda x : x)
 
     p_batch_size = examples_per_batch
     q_batch_size = total_batch_size - examples_per_batch
-
-    #FIXME zero sized batches should be allowed
 
     p = prs.prsample(object_list, p_batch_size, example_class.examples_per_obj, \
         example_class.get_example_from_obj, seed = 2, no_duplicated_data = no_duplicated_data)

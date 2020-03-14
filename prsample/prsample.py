@@ -114,6 +114,7 @@ class prsample:
         else:
             self.examples_per_batch_index = 0
             self.total_example_count = 0
+            # self._cumsum_examples_per_class = np.zeros(len(self._class_list) + 1, dtype=int)
 
         assert isinstance(no_duplicated_data, bool) , 'no_duplicated_data must be an bool type.'
         self.no_duplicated_data = no_duplicated_data
@@ -220,7 +221,6 @@ class prsample:
 
         self.number_of_batches = int(np.ceil(self.total_example_count / self.examples_per_batch))
 
-        print('total_example_count', self.total_example_count, 'examples_per_batch', self.examples_per_batch)
         self.examples_per_batch_index = int(np.ceil(self.total_example_count/self.examples_per_batch))
 
         #Work out the exact number of batches each batch index could produce before wrapping around
@@ -257,7 +257,6 @@ class prsample:
             ex = get_example_from_object(idx, class_list, cumsum_examples_per_class)
 
             if ex is not None:
-                # print(ex.class_idx, ex.obj_idx)
                 assert(ex not in seen_examples)
                 seen_examples.add(ex)
                 if ex.is_valid != None:
