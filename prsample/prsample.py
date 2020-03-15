@@ -223,19 +223,6 @@ class prsample:
 
         self.examples_per_batch_index = int(np.ceil(self.total_example_count/self.examples_per_batch))
 
-        #Work out the exact number of batches each batch index could produce before wrapping around
-        if self.examples_per_batch > self.total_example_count:
-            self.exact_examples_per_batch_index = np.zeros(self.examples_per_batch, dtype= int)
-            self.exact_examples_per_batch_index[:self.total_example_count] = 1
-            self.exact_examples_per_batch_index[self.total_example_count:] = 0
-        else:
-            r = self.examples_per_batch - ((self.examples_per_batch_index*self.examples_per_batch)%self.total_example_count)
-            self.exact_examples_per_batch_index = np.zeros(self.examples_per_batch, dtype= int)
-            self.exact_examples_per_batch_index[:r] = self.examples_per_batch_index
-            self.exact_examples_per_batch_index[r:] = (self.examples_per_batch_index - 1)
-
-        assert sum(self.exact_examples_per_batch_index) == self.total_example_count
-
         # Find the strides for the 
         self.batch_strides = self._find_batch_strides(self.examples_per_batch, self.total_example_count, self.examples_per_batch_index)
 

@@ -90,6 +90,13 @@ class Ordered_In_Class_Pair_Example(Pair_Example):
         Pair_Example.__init__(self, class_a, obj_a_idx, class_b, obj_b_idx)
         return
 
+    def is_valid(self, class_list):
+        if not Pair_Example.is_valid(self, class_list):
+            return False
+        assert self.class_a == self.class_b, 'Class a and class b must be the same.'
+
+        return True
+
     @staticmethod
     def examples_per_obj(class_idx, object_idx, class_list):
         return len(class_list[class_idx]["object_list"])
@@ -100,13 +107,20 @@ class Ordered_In_Class_Pair_Example(Pair_Example):
         class_idx = prs.get_class_idx_from_index(index, cumsum_examples_per_class)
         obj_idx, offset = prs.get_obj_idx_from_index(index, class_list[class_idx])
 
-        return Pair_Example(class_list[class_idx]['class_no'], obj_idx, class_list[class_idx]['class_no'], offset)
+        return Ordered_In_Class_Pair_Example(class_list[class_idx]['class_no'], obj_idx, class_list[class_idx]['class_no'], offset)
 
 class Unordered_In_Class_Pair_Example(Pair_Example):
 
     def __init__(self, class_a, obj_a_idx, class_b, obj_b_idx):
         Pair_Example.__init__(self, class_a, obj_a_idx, class_b, obj_b_idx)
         return
+
+    def is_valid(self, class_list):
+        if not Pair_Example.is_valid(self, class_list):
+            return False
+        assert self.class_a == self.class_b, 'Class a and class b must be the same.'
+            
+        return True
 
     @staticmethod
     def examples_per_obj(class_idx, obj_idx, class_list):
@@ -121,7 +135,7 @@ class Unordered_In_Class_Pair_Example(Pair_Example):
 
         obj_b_idx = obj_a_idx + 1 + offset
 
-        return Pair_Example(class_list[class_idx]['class_no'], obj_a_idx, class_list[class_idx]['class_no'], obj_b_idx)
+        return Unordered_In_Class_Pair_Example(class_list[class_idx]['class_no'], obj_a_idx, class_list[class_idx]['class_no'], obj_b_idx)
 
 
 class Unordered_Out_of_Class_Pair_Example(Pair_Example):
@@ -129,6 +143,12 @@ class Unordered_Out_of_Class_Pair_Example(Pair_Example):
     def __init__(self, class_a, obj_a_idx, class_b, obj_b_idx):
         Pair_Example.__init__(self, class_a, obj_a_idx, class_b, obj_b_idx)
         return
+
+    def is_valid(self, class_list):
+        if not Pair_Example.is_valid(self, class_list):
+            return False
+        assert self.class_a != self.class_b, 'Class a and class b cannot be the same.'
+        return True
 
     @staticmethod
     def examples_per_obj(class_idx, obj_idx, class_list):
@@ -147,7 +167,7 @@ class Unordered_Out_of_Class_Pair_Example(Pair_Example):
             obj_b_idx -= len(class_list[class_b_idx]["object_list"])
             class_b_idx += 1
 
-        return Pair_Example(class_list[class_a_idx]['class_no'], obj_a_idx, class_list[class_b_idx]['class_no'], obj_b_idx)
+        return Unordered_Out_of_Class_Pair_Example(class_list[class_a_idx]['class_no'], obj_a_idx, class_list[class_b_idx]['class_no'], obj_b_idx)
 
 
 
