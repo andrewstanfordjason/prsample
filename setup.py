@@ -1,9 +1,9 @@
 import setuptools
 import re
+import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
-
 
 package_name = "prsample"
 
@@ -14,12 +14,12 @@ try:
 except EnvironmentError:
     pass # Okay, there is no version file.
 else:
-    VSRE = r"^verstr = ['\"]([^'\"]*)['\"]"
+    VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
     mo = re.search(VSRE, verstrline, re.M)
     if mo:
         verstr = mo.group(1)
     else:
-        print "unable to find version in %s" % (version_file,)
+        print ("unable to find version in %s" % (version_file,))
         raise RuntimeError("if %s.py exists, it is required to be well-formed" % (version_file,))
 
 setuptools.setup(
