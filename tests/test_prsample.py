@@ -10,7 +10,9 @@ example_list = [
     prse.Single_Example,
     prse.Ordered_In_Class_Pair_Example,
     prse.Unordered_In_Class_Pair_Example, 
-    prse.Unordered_Out_of_Class_Pair_Example]
+    prse.Unordered_Out_of_Class_Pair_Example,
+    prse.Pos_Anc_Neg_Triplet_Example,
+    ]
 
 '''
     This describes the expected number of examples for a given class_list.
@@ -20,6 +22,7 @@ expected_count_fn = [
     lambda class_list : sum([len(c) * len(c) for c in class_list]),
     lambda class_list : sum([(len(c) * (len(c)-1) // 2) for c in class_list]),
     lambda class_list : sum([len(class_list[i]) * sum([len(class_list[j]) for j in range(i+1, len(class_list))]) for i in range(len(class_list))]),
+    lambda class_list : sum([(len(c) * (len(c)-1) // 2)*(sum([len(d) for d in class_list]) - len(c)) for c in class_list]),
     ]
 
 def build_class_list(class_count, objects_per_class):
@@ -35,7 +38,7 @@ def build_class_list(class_count, objects_per_class):
 
 @pytest.mark.parametrize(("example_class", "expected_count_fn"), zip(example_list, expected_count_fn))
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
-@pytest.mark.parametrize("examples_per_batch",[i for i in range(1, 8)])
+@pytest.mark.parametrize("examples_per_batch",[i for i in range(8, 18)])
 def test_directed_set_size(examples_per_batch, no_duplicated_data, example_class, expected_count_fn):
 
     class_list = build_class_list(5, lambda x : x)
@@ -75,7 +78,7 @@ def test_get_obj_no_from_index(examples_per_batch, no_duplicated_data, example_c
 @pytest.mark.parametrize("no_duplicated_data",[True, False])
 @pytest.mark.parametrize("examples_per_batch",[i for i in range(0, 48)])
 def test_run_self_checks(examples_per_batch, no_duplicated_data, example_class):
-    object_list = build_class_list(5, lambda x : np.random.randint(3, 12))
+    object_list = build_class_list(3, lambda x : np.random.randint(3, 12))
     p = prs.prsample(object_list, examples_per_batch, example_class.examples_per_obj, \
         example_class.get_example_from_obj, no_duplicated_data = no_duplicated_data)
     p.run_self_checks()
@@ -203,7 +206,7 @@ def test_shared_object_singles(examples_per_batch, no_duplicated_data, example_c
     return
 
 def test_version_number():
-    assert prs.__version__ == '0.0.3'
+    assert prs.__version__ == '0.0.5'
     return
 
 
